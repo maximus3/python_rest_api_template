@@ -16,6 +16,7 @@ from sqlalchemy_utils import create_database, database_exists, drop_database
 from app.config import get_settings
 from app.creator import get_app
 from app.database.connection import SessionManager
+from app.utils import user
 from tests.factory_lib import UserFactory
 from tests.utils import make_alembic_config
 
@@ -108,8 +109,17 @@ async def client(  # type: ignore
 
 
 @pytest.fixture
-async def not_created_user():  # type: ignore
+async def potential_user():  # type: ignore
     yield UserFactory.build()
+
+
+@pytest.fixture
+async def not_created_user(potential_user):  # type: ignore
+    settings = get_settings()
+    yield UserFactory.build(
+        username=potential_user.username,
+        password=settings.PWD_CONTEXT.hash(potential_user.password),
+    )
 
 
 @pytest.fixture
@@ -119,3 +129,13 @@ async def created_user(not_created_user, session):  # type: ignore
     await session.refresh(not_created_user)
 
     yield not_created_user
+
+
+@pytest.fixture
+def user_token(created_user):
+    return user.create_access_token(data={'sub': created_user.username})
+
+
+@pytest.fixture
+def user_headers(user_token):
+    return {'Authorization': f'Bearer {user_token}'}
