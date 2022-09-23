@@ -35,8 +35,10 @@ jobs:
     #----------------------------------------------
     #  -----  install & configure poetry  -----
     #----------------------------------------------
-    - name: Install Poetry
-      run: make venv
+    - name: Install Poetry and dependencies
+      run: |
+        make venv
+        make install
     #----------------------------------------------
     #       load cached venv if cache exists
     #----------------------------------------------
