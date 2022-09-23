@@ -53,7 +53,11 @@ jobs:
       run: make lint
       
     - name: Run tests
-      run: sudo make test
+      run: |
+        make env
+        echo "APP_HOST=127.0.0.1" >> .env
+        make db
+        sudo make test
 
   deploy:
 
