@@ -13,7 +13,7 @@ ENV PYTHONUNBUFFERED=on
 # set workdir as PYTHONPATH
 ENV PYTHONPATH=/opt/app
 
-ENV POETRY_VERSION=1.1.13
+ENV POETRY_VERSION=1.2
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
