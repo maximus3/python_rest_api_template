@@ -13,24 +13,21 @@ ENV PYTHONUNBUFFERED=on
 # set workdir as PYTHONPATH
 ENV PYTHONPATH=/opt/app
 
-ENV POETRY_VERSION=1.2
-
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && apt-get autoclean && apt-get autoremove \
     && rm -rf /var/lib/apt/lists/* \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*  \
-    && pip install "poetry==$POETRY_VERSION" \
-    && poetry config virtualenvs.create false
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 WORKDIR /opt/app
 
 COPY pyproject.toml poetry.loc[k] /opt/app/
+COPY Makefile Makefile
 
-RUN poetry install --no-dev
+RUN make venv
+RUN make install-prod
 
 COPY setup.cfg setup.cfg
-COPY Makefile Makefile
 COPY alembic.ini alembic.ini
 
 COPY app app

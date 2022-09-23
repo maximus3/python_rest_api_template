@@ -12,7 +12,7 @@ else
 endif
 
 POETRY_VERSION=1.2
-POETRY_RUN = poetry run
+POETRY_RUN = $(VENV_BIN)/poetry run
 
 # Manually define main variables
 
@@ -64,18 +64,17 @@ venv: ##@Environment Create virtual environment, no need in docker
 	$(VENV_BIN)/python -m pip install poetry==$(POETRY_VERSION)
 	$(VENV_BIN)/poetry config virtualenvs.create true
 	$(VENV_BIN)/poetry config virtualenvs.in-project true
-	$(VENV_BIN)/poetry install --no-interaction --no-ansi
-
-
-.PHONY: venv-activate
-venv-activate: ##@Environment Activate virtual environment
-	@echo "Activate virtual environment"
-	@source $(VENV_BIN)/activate
 
 
 .PHONY: install
 install: ##@Code Install dependencies
-	poetry install --no-interaction --no-ansi
+	$(VENV_BIN)/poetry install --no-interaction --no-ansi
+
+
+.PHONY: install-prod
+install-prod: ##@Code Install dependencies for production
+	$(VENV_BIN)/poetry install --without dev --no-interaction --no-ansi
+
 
 .PHONY: up
 up: ##@Application Up App
