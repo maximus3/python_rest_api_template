@@ -12,7 +12,7 @@ else
 endif
 
 POETRY_VERSION=1.1.13
-POETRY_RUN = $(VENV_BIN)/poetry run
+POETRY_RUN = poetry run
 
 # Manually define main variables
 

@@ -111,6 +111,7 @@ venv.bak/
 *.db
 pgadmin/*
 pgdata/*
+db/*
 
 deploy/*
 !deploy/generate.sh

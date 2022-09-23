@@ -14,7 +14,6 @@ ENV PYTHONUNBUFFERED=on
 ENV PYTHONPATH=/opt/app
 
 ENV POETRY_VERSION=1.1.13
-ARG ENVIRONMENT=development
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
@@ -28,7 +27,7 @@ WORKDIR /opt/app
 
 COPY pyproject.toml poetry.loc[k] /opt/app/
 
-RUN poetry install $(if test "$ENVIRONMENT" = production; then echo "--no-dev"; fi)
+RUN poetry install --no-dev
 
 COPY setup.cfg setup.cfg
 COPY Makefile Makefile
