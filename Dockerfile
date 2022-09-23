@@ -32,10 +32,9 @@ RUN poetry install $(if test "$ENVIRONMENT" = production; then echo "--no-dev"; 
 
 COPY setup.cfg setup.cfg
 COPY Makefile Makefile
+COPY alembic.ini alembic.ini
 
 COPY app app
-COPY config config
-COPY database database
 COPY tests tests
 
 ENTRYPOINT []

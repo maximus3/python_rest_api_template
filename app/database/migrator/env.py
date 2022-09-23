@@ -28,7 +28,7 @@ config.set_section_option(
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
-if config.config_file_name is not None:
+if config.config_file_name is not None:  # pragma: no cover
     fileConfig(config.config_file_name)
 
 # add your model's MetaData object here
@@ -43,7 +43,7 @@ target_metadata = DeclarativeBase.metadata
 # ... etc.
 
 
-def run_migrations_offline() -> None:
+def run_migrations_offline() -> None:  # pragma: no cover
     """Run migrations in 'offline' mode.
 
     This configures the context with just a URL
@@ -67,7 +67,7 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
-def run_migrations_online() -> None:
+def run_migrations_online() -> None:  # pragma: no cover
     """Run migrations in 'online' mode.
 
     In this scenario we need to create an Engine
@@ -100,7 +100,7 @@ def run_migrations_online() -> None:
             context.run_migrations()
 
 
-if context.is_offline_mode():
+if context.is_offline_mode():  # pragma: no cover
     run_migrations_offline()
 else:
     run_migrations_online()

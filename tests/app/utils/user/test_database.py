@@ -7,10 +7,10 @@ pytestmark = pytest.mark.asyncio
 
 
 class TestGetUserHandler:
-    async def test_get_user_no_user(self, session, not_created_user):
+    async def test_get_user_no_user(self, session, potential_user):
         assert (
             await user.get_user(
-                session=session, username=not_created_user.username
+                session=session, username=potential_user.username
             )
             is None
         )

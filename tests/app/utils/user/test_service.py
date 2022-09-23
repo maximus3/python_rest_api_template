@@ -74,12 +74,12 @@ class TestGetCurrentUserHandler:
                 session, user.create_access_token(data={})
             )
 
-    async def test_get_current_user_user_none(self, session, not_created_user):
+    async def test_get_current_user_user_none(self, session, potential_user):
         with pytest.raises(HTTPException):
             await user.get_current_user(
                 session,
                 user.create_access_token(
-                    data={'sub': not_created_user.username}
+                    data={'sub': potential_user.username}
                 ),
             )
 
