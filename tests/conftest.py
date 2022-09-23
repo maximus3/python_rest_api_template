@@ -82,7 +82,8 @@ def create_async_session(  # type: ignore
     postgres, migrated_postgres, manager: SessionManager = SessionManager()
 ) -> tp.Callable:  # type: ignore
     """
-    Returns a class object with which you can create a new session to connect to the database.
+    Returns a class object with which you can
+    create a new session to connect to the database.
     """
     manager.refresh()
     yield manager.create_async_session

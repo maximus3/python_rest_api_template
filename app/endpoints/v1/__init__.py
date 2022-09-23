@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
-from .ping import api_router as ping_router
 from .auth import api_router as auth_router
+from .ping import api_router as ping_router
 
 
 prefix = '/v1'

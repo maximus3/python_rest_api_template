@@ -35,20 +35,24 @@ class TestAuthenticateUserHandler:
         )
 
 
-class TestCreateAccessTokenHandler:  # TODO: best practice for const strings?
-    async def test_create_access_token_with_expires_delta(self):
+class TestCreateAccessTokenHandler:
+    async def test_create_access_token_with_expires_delta(
+        self, datetime_utcnow_mock, token_with_exp
+    ):
         access_token_expires = timedelta(minutes=1)
         assert (
             user.create_access_token(
                 data={'sub': 'test'}, expires_delta=access_token_expires
             )
-            is not None
-        )  # TODO: how check valid token?
+            == token_with_exp
+        )
 
-    async def test_create_access_token(self):
+    async def test_create_access_token(
+        self, datetime_utcnow_mock, token_without_exp
+    ):
         assert (
-            user.create_access_token(data={'sub': 'test'}) is not None
-        )  # TODO: how check valid token?
+            user.create_access_token(data={'sub': 'test'}) == token_without_exp
+        )
 
 
 class TestVerifyPasswordHandler:

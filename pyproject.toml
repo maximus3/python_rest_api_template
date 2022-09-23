@@ -119,6 +119,9 @@ max-attributes=10
 # Maximum number of public methods for a class (see R0904).
 max-public-methods=10
 
+[tool.pylint.format]
+max-line-length = 79
+
 [tool.black]
 line-length = 79
 target-version = ['py310']
