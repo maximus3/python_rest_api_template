@@ -17,7 +17,6 @@ chmod +x generate.sh
 ## 3. Add Github/Gitlab Secrets
 
 - `.env` to `ENV`
-- `known_hosts_to_github.txt` to `SSH_KNOWN_HOSTS`
 - `host.txt` to `SSH_ADRESS`
 - `username.txt` to `SSH_USERNAME`
 - `id_rsa` to `SSH_KEY`

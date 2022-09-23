@@ -66,6 +66,13 @@ venv: ##@Environment Create virtual environment, no need in docker
 	$(VENV_BIN)/poetry config virtualenvs.in-project true
 	$(VENV_BIN)/poetry install --no-interaction --no-ansi
 
+
+.PHONY: venv-activate
+venv-activate: ##@Environment Activate virtual environment
+	@echo "Activate virtual environment"
+	@source $(VENV_BIN)/activate
+
+
 .PHONY: install
 install: ##@Code Install dependencies
 	poetry install --no-interaction --no-ansi
