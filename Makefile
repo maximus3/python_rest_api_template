@@ -94,19 +94,19 @@ db: ##@Database Docker up db
 
 .PHONY: test
 test: ##@Testing Runs pytest with coverage
-	make db && $(TEST) --cov
+	$(TEST) --cov
 
 .PHONY: test-fast
 test-fast: ##@Testing Runs pytest with exitfirst
-	make db && $(TEST) --exitfirst
+	$(TEST) --exitfirst
 
 .PHONY: test-failed
 test-failed: ##@Testing Runs pytest from last-failed
-	make db && $(TEST) --last-failed
+	$(TEST) --last-failed
 
 .PHONY: test-cov
 test-cov: ##@Testing Runs pytest with coverage report
-	make db && $(TEST) --cov --cov-report html
+	$(TEST) --cov --cov-report html
 
 .PHONY: format
 format: ###@Code Formats all files
