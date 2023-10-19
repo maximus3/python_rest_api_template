@@ -17,14 +17,14 @@ class BaseModel(DeclarativeBase):
     )
     dt_created = Column(
         TIMESTAMP(timezone=True),
-        server_default=func.current_timestamp(),
+        server_default=func.current_timestamp(),  # pylint: disable=not-callable
         nullable=False,
         doc='Date and time of create (type TIMESTAMP)',
     )
     dt_updated = Column(
         TIMESTAMP(timezone=True),
-        server_default=func.current_timestamp(),
-        onupdate=func.current_timestamp(),
+        server_default=func.current_timestamp(),  # pylint: disable=not-callable
+        onupdate=func.current_timestamp(),  # pylint: disable=not-callable
         nullable=False,
         doc='Date and time of last update (type TIMESTAMP)',
     )

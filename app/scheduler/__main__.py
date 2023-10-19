@@ -26,7 +26,8 @@ def _job_info_wrapper(  # pylint: disable=too-many-statements
         async def _wrapped(*args, **kwargs):  # type: ignore
             log_id = uuid.uuid4().hex
             log_file_name = (
-                settings.LOGGING_FILE_DIR / f'scheduler/job-{job_info.name}-{log_id}.log'
+                settings.LOGGING_FILE_DIR
+                / f'scheduler/job-{job_info.name}-{log_id}.log'
             )
             base_logger = loguru.logger.bind(uuid=log_id)
             if config.send_logs:
@@ -97,9 +98,7 @@ def _job_info_wrapper(  # pylint: disable=too-many-statements
             try:
                 pathlib.Path(log_file_name).unlink()
             except Exception as exc:  # pylint: disable=broad-except
-                base_logger.exception(
-                    'Error while deleting log file: {}', exc
-                )
+                base_logger.exception('Error while deleting log file: {}', exc)
                 await send.send_traceback_message_safe(
                     logger=base_logger,
                     message=f'Error while deleting log file: {exc}',

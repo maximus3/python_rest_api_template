@@ -53,10 +53,14 @@ class DefaultSettings(BaseSettings):
         1440, env='ACCESS_TOKEN_EXPIRE_MINUTES'
     )
 
-    PWD_CONTEXT: CryptContext = CryptContext(schemes=['bcrypt'], deprecated='auto')
+    PWD_CONTEXT: CryptContext = CryptContext(
+        schemes=['bcrypt'], deprecated='auto'
+    )
 
     AUTH_URL: str = '/api/v1/user/authentication'
-    OAUTH2_SCHEME: OAuth2PasswordBearer = OAuth2PasswordBearer(tokenUrl=AUTH_URL)
+    OAUTH2_SCHEME: OAuth2PasswordBearer = OAuth2PasswordBearer(
+        tokenUrl=AUTH_URL
+    )
 
     TG_HELPER_BOT_TOKEN: str = Field('', env='TG_HELPER_BOT_TOKEN')
     TG_ERROR_CHAT_ID: str = Field('', env='TG_ERROR_CHAT_ID')
@@ -69,6 +73,8 @@ class DefaultSettings(BaseSettings):
     CELERY_RESULT_BACKEND: str = Field(
         'redis://localhost:6379', env='CELERY_RESULT_BACKEND'
     )
+    CELERY_USER: str = Field('', env='CELERY_USER')
+    CELERY_PASSWORD: str = Field('', env='CELERY_PASSWORD')
 
     @property
     def database_settings(self) -> dict[str, str | int]:
