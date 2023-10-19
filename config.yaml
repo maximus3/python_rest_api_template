@@ -1,0 +1,11 @@
+scheduler:
+  ping:
+    trigger: interval
+    minutes: 1
+    config:
+      send_logs: false
+  db_dump:
+    trigger: cron
+    hour: 3
+    config:
+      send_logs: true

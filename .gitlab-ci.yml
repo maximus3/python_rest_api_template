@@ -1,37 +1,44 @@
-image: python:3.10
+stages:
+  - build
+  - check
+  - deploy
+
 
 variables:
+  TAG_LATEST: $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:latest
+  TAG_COMMIT: $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:$CI_COMMIT_SHORT_SHA
+  PYTHON_IMAGE: python:3.11
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
-  CODE: "app tests"
+  REPO_NAME: $CI_PROJECT_NAME
+  REPO_URL: $CI_PROJECT_URL
+  REPO_BRANCH: $CI_COMMIT_REF_NAME
+  CODE_FOLDER: $REPO_NAME-$REPO_BRANCH
 
-cache:
-  paths:
-    - .cache/pip
-    - .venv/
 
-before_script:
-  - python -V
-  - python -m venv .venv
-  - source .venv/bin/activate
-  - python -m pip install --upgrade pip
-  - python -m pip install poetry
-  - poetry install
+build:
+  image: $PYTHON_IMAGE
+  stage: build
+  artifacts:
+    paths:
+     - .cache/pip
+      - .venv/
+      - .env
+  script:
+    - make env
+    - make venv
+    - make install
 
-stages:
-  - lint
-  - test
 
 lint:
-  stage: lint
+  image: $PYTHON_IMAGE
+  stage: check
   script:
-    - flake8 --jobs 4 --statistics --show-source $CODE
-    - pylint --jobs 4 $CODE
-    - mypy $CODE
-    - black --line-length 79 --target-version py39 --skip-string-normalization --check $CODE
-    - pytest --dead-fixtures --dup-fixtures
+    - make lint
+
 
 test:
-  stage: test
+  image: $PYTHON_IMAGE
+  stage: check
   variables:
     POSTGRES_DB: data
     POSTGRES_USER: pguser
@@ -41,4 +48,29 @@ test:
   services:
     - name: postgres:14.5
   script:
-    - pytest --verbosity=2 --showlocals --log-level=DEBUG --cov
+    - make test-mp
+
+
+deploy:
+  image: ubuntu:20.04
+  stage: deploy
+  before_script:
+    - apt-get update && apt-get install openssh-client -y
+    - mkdir -p ~/.ssh
+    - echo "$SSH_KEY" | tr -d '\r' > ~/.ssh/deploy_key
+    - chmod 600 ~/.ssh/deploy_key
+    - ssh -i ~/.ssh/deploy_key -p $SSH_PORT -o StrictHostKeyChecking=no $SSH_USERNAME@$SSH_ADDRESS "echo "Ping" && exit"
+  script:
+    - ssh -i ~/.ssh/deploy_key -p $SSH_PORT -o StrictHostKeyChecking=no $SSH_USERNAME@$SSH_ADDRESS "
+        [ -e $CODE_FOLDER ] || (git clone https://$CI_DEPLOY_USER:$CI_DEPLOY_PASSWORD@$CI_SERVER_HOST/$CI_PROJECT_NAMESPACE/$REPO_NAME.git $CODE_FOLDER && 
+        cd $CODE_FOLDER && git checkout $REPO_BRANCH && git pull) && exit"
+
+    - scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -P $SSH_PORT $ENV $SSH_USERNAME@$SSH_ADDRESS:/home/$SSH_USERNAME/$CODE_FOLDER/.env
+    - ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USERNAME@$SSH_ADDRESS "
+        cd $CODE_FOLDER;
+        make docker-stop postgres;
+        make db;
+        make update;
+        exit"
+  only:
+    - master

@@ -2,7 +2,8 @@ from pathlib import Path
 
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
-from pydantic import BaseSettings, Field
+from pydantic import Field
+from pydantic_settings import BaseSettings
 
 
 class DefaultSettings(BaseSettings):
@@ -16,9 +17,11 @@ class DefaultSettings(BaseSettings):
     """
 
     ENV: str = Field('local', env='ENV')
+    PROJECT_NAME: str = Field('PROJECT_NAME', env='PROJECT_NAME')
     PATH_PREFIX: str = Field('/api', env='PATH_PREFIX')
     APP_HOST: str = Field('http://127.0.0.1', env='APP_HOST')
     APP_PORT: int = Field(8090, env='APP_PORT')
+    NGINX_EXTERNAL_PORT: int = Field(80, env='NGINX_EXTERNAL_PORT')
     DEBUG: bool = Field(True, env='DEBUG')
 
     POSTGRES_DB: str = Field('data', env='POSTGRES_DB')
@@ -27,12 +30,21 @@ class DefaultSettings(BaseSettings):
     POSTGRES_PORT: int = Field('5432', env='POSTGRES_PORT')
     POSTGRES_PASSWORD: str = Field('pgpswd', env='POSTGRES_PASSWORD')
 
-    LOGGING_FORMAT = (
-        '%(filename)s %(funcName)s [LINE:%(lineno)d]# '
-        '%(levelname)-8s [%(asctime)s] %(name)s: %(message)s'
+    LOGGING_FORMAT: str = (
+        '%(filename)s %(funcName)s [%(thread)d] '
+        '[LINE:%(lineno)d]# %(levelname)-8s '
+        '[%(asctime)s.%(msecs)03d] %(name)s: '
+        '%(message)s'
     )
+    LOGGING_FILE_DIR: Path = Path('logs')
+    LOGGING_APP_FILE: Path = LOGGING_FILE_DIR / 'logfile.log'
+    LOGGING_SCHEDULER_FILE: Path = LOGGING_FILE_DIR / 'scheduler_logfile.log'
+    LOGGING_WORKER_FILE: Path = LOGGING_FILE_DIR / 'worker_logfile.log'
 
-    BASE_DIR = Path(__file__).resolve().parent.parent
+    BASE_DIR: Path = Path(__file__).resolve().parent.parent.parent
+    CONFIG_FILENAME: str = 'config.yaml'
+
+    JWT_SECRET: str = Field('', env='JWT_SECRET')
 
     # to get a string like this run: "openssl rand -hex 32"
     SECRET_KEY: str = Field('', env='SECRET_KEY')
@@ -41,9 +53,21 @@ class DefaultSettings(BaseSettings):
         1440, env='ACCESS_TOKEN_EXPIRE_MINUTES'
     )
 
-    PWD_CONTEXT = CryptContext(schemes=['bcrypt'], deprecated='auto')
-    OAUTH2_SCHEME = OAuth2PasswordBearer(
-        tokenUrl=f'{APP_HOST}:{APP_PORT}{PATH_PREFIX}/user/authentication'
+    PWD_CONTEXT: CryptContext = CryptContext(schemes=['bcrypt'], deprecated='auto')
+
+    AUTH_URL: str = '/api/v1/user/authentication'
+    OAUTH2_SCHEME: OAuth2PasswordBearer = OAuth2PasswordBearer(tokenUrl=AUTH_URL)
+
+    TG_HELPER_BOT_TOKEN: str = Field('', env='TG_HELPER_BOT_TOKEN')
+    TG_ERROR_CHAT_ID: str = Field('', env='TG_ERROR_CHAT_ID')
+    TG_DB_DUMP_CHAT_ID: str = Field('', env='TG_DB_DUMP_CHAT_ID')
+    TG_LOG_SEND_CHAT_ID: str = Field('', env='TG_LOG_SEND_CHAT_ID')
+
+    CELERY_BROKER_URL: str = Field(
+        'redis://localhost:6379', env='CELERY_BROKER_URL'
+    )
+    CELERY_RESULT_BACKEND: str = Field(
+        'redis://localhost:6379', env='CELERY_RESULT_BACKEND'
     )
 
     @property

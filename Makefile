@@ -7,11 +7,11 @@ ifeq ($(OS),Windows_NT)
     PYTHON_EXECUTABLE = python
     VENV_BIN = $(VENV)/Scripts
 else
-    PYTHON_EXECUTABLE = python3
+    PYTHON_EXECUTABLE = python3.11
     VENV_BIN = $(VENV)/bin
 endif
 
-POETRY_VERSION=1.2
+POETRY_VERSION=1.6
 POETRY_RUN = $(VENV_BIN)/poetry run
 
 # Manually define main variables
@@ -34,7 +34,7 @@ MESSAGE = "Done"
 endif
 
 TEST = $(POETRY_RUN) pytest --verbosity=2 --showlocals --log-level=DEBUG
-CODE = $(APPLICATION_NAME) tests
+CODE = app tools tests
 
 HELP_FUN = \
 	%help; while(<>){push@{$$help{$$2//'options'}},[$$1,$$3] \
@@ -72,21 +72,35 @@ install: ##@Code Install dependencies
 
 
 .PHONY: install-prod
-install-prod: ##@Code Install dependencies for production
+install-prod: ##@Code Install dependencies for production only
 	$(VENV_BIN)/poetry install --without dev --no-interaction --no-ansi
+
+
+.PHONY: poetry-add
+poetry-add: ##@Code Add new dependency
+	$(VENV_BIN)/poetry add $(args)
 
 
 .PHONY: up
 up: ##@Application Up App
 	$(POETRY_RUN) python -m app
 
+
+.PHONY: up-scheduler
+up-scheduler: ##@Application Up Scheduler
+	$(POETRY_RUN) python -m app.scheduler
+
 .PHONY: migrate
 migrate:  ##@Database Do all migrations in database
-	alembic upgrade $(args)
+	$(POETRY_RUN) alembic upgrade $(args)
 
 .PHONY: revision
 revision:  ##@Database Create new revision file automatically with prefix (ex. 2022_01_01_14cs34f_message.py)
-	alembic revision --autogenerate
+	$(POETRY_RUN) alembic revision --autogenerate
+
+.PHONY: downgrade
+downgrade:  ##@Database Downgrade migration on one revision
+	alembic downgrade -1
 
 .PHONY: db
 db: ##@Database Docker up db
@@ -94,7 +108,8 @@ db: ##@Database Docker up db
 
 .PHONY: test
 test: ##@Testing Runs pytest with coverage
-	$(TEST) --cov
+	$(POETRY_RUN) pytest tests/app/endpoints/v1/test_ping.py::TestHealthCheckHandler::test_ping_database
+	$(TEST) $(args) --cov
 
 .PHONY: test-fast
 test-fast: ##@Testing Runs pytest with exitfirst
@@ -108,11 +123,28 @@ test-failed: ##@Testing Runs pytest from last-failed
 test-cov: ##@Testing Runs pytest with coverage report
 	$(TEST) --cov --cov-report html
 
+.PHONY: test-mp
+test-mp: ##@Testing Runs pytest with multiprocessing
+	$(POETRY_RUN) pytest tests/app/endpoints/v1/test_ping.py::TestHealthCheckHandler::test_ping_database
+	$(TEST) --cov -n auto
+
+.PHONY: test-fast-mp
+test-fast-mp: ##@Testing Runs pytest with exitfirst with multiprocessing
+	$(TEST) --exitfirst -n auto
+
+.PHONY: test-failed-mp
+test-failed-mp: ##@Testing Runs pytest from last-failed with multiprocessing
+	$(TEST) --last-failed -n auto
+
+.PHONY: test-cov-mp
+test-cov-mp: ##@Testing Runs pytest with coverage report with multiprocessing
+	$(TEST) --cov --cov-report html -n auto
+
 .PHONY: format
 format: ###@Code Formats all files
 	$(POETRY_RUN) autoflake --recursive --in-place --remove-all-unused-imports $(CODE)
 	$(POETRY_RUN) isort $(CODE)
-	$(POETRY_RUN) black --line-length 79 --target-version py310 --skip-string-normalization $(CODE)
+	$(POETRY_RUN) black --line-length 79 --target-version py311 --skip-string-normalization $(CODE)
 	$(POETRY_RUN) unify --in-place --recursive $(CODE)
 
 .PHONY: lint
@@ -120,12 +152,12 @@ lint: ###@Code Lint code
 	$(POETRY_RUN) flake8 --jobs 4 --statistics --show-source $(CODE)
 	$(POETRY_RUN) pylint $(CODE)
 	$(POETRY_RUN) mypy $(CODE)
-	$(POETRY_RUN) black --line-length 79 --target-version py310 --skip-string-normalization --check $(CODE)
+	$(POETRY_RUN) black --line-length 79 --target-version py311 --skip-string-normalization --check $(CODE)
 	$(POETRY_RUN) pytest --dead-fixtures --dup-fixtures
 	$(POETRY_RUN) safety check --full-report || echo "Safety check failed"
 
 .PHONY: check
-check: format lint test ###@Code Format and lint code then run tests
+check: gen format lint test-mp ###@Code Format and lint code then run tests
 
 .PHONY: docker-up
 docker-up: ##@Application Docker up
@@ -134,6 +166,7 @@ docker-up: ##@Application Docker up
 .PHONY: docker-up-d
 docker-up-d: ##@Application Docker up detach
 	docker-compose up -d --remove-orphans
+	docker-compose up -d --force-recreate nginx
 
 .PHONY: docker-build
 docker-build: ##@Application Docker build
@@ -147,12 +180,250 @@ docker-up-build: ##@Application Docker up detach with build
 docker-down: ##@Application Docker down
 	docker-compose down
 
+.PHONY: docker-stop
+docker-stop: ##@Application Docker stop some app
+	docker-compose stop $(args)
+
 .PHONY: docker-clean
 docker-clean: ##@Application Docker prune -f
 	docker image prune -f
 
 .PHONY: docker
 docker: docker-clean docker-build docker-up-d docker-clean ##@Application Docker prune, up, run and prune
+
+.PHONY: open
+open: ##@Docker Open container in docker
+	docker exec -it $(args) /bin/bash
+
+.PHONY: docker-run
+docker-run: ##@Docker Run sh in paused docker container
+	docker run --rm -it --entrypoint bash $(args)
+
+.PHONY: docker-migrate
+docker-migrate: ##@Application Migrate db in docker
+	docker exec $(APPLICATION_NAME) make migrate $(args)
+
+.PHONY: commit
+commit: gen format lint ##@Git Commit with message all files (with lint)
+	$(eval MESSAGE := $(shell read -p "Commit message: " MESSAGE; echo $$MESSAGE))
+	@git add .
+	@git status
+	@git commit -m "$(MESSAGE)"
+
+.PHONY: commit-fast
+commit-fast: format ##@Git Commit with message all files (no lint)
+	$(eval MESSAGE := $(shell read -p "Commit message: " MESSAGE; echo $$MESSAGE))
+	@git add .
+	@git status
+	@git commit -m "$(MESSAGE)"
+
+.PHONY: push
+push: ##@Git Push to origin
+	@git push
+
+.PHONY: pull
+pull: ##@Git Pull from origin
+	@git pull
+
+.PHONY: check-git
+git: check commit ##@Git Check and commit
+
+.PHONY: update
+update: pull db dump-local docker-build ##@Application Update docker app
+	@make docker-stop
+	@make delete-container-data
+	@make docker
+	@make docker-migrate head
+	@make docker-prune-cache
+
+.PHONY: dump
+dump: ##@Database Dump database from server
+	$(eval FILENAME=backup_$(shell date +%Y%m%d_%H%M%S).sql)
+	$(eval PORT=$(shell cat deploy/port.txt))
+	$(eval HOST=$(shell cat deploy/host.txt))
+	$(eval USERNAME=$(shell cat deploy/username.txt))
+	$(eval DB_NAME=$(shell cat deploy/db_name.txt))
+	$(eval DB_USERNAME=$(shell cat deploy/db_username.txt))
+
+	echo "Dumping database to $(FILENAME)"
+	ssh -p $(PORT) $(USERNAME)@$(HOST) "docker exec postgres pg_dump -f $(FILENAME) -d $(DB_NAME) -U $(DB_USERNAME);docker cp postgres:$(FILENAME) $(FILENAME);docker exec postgres rm $(FILENAME);exit;"
+	scp -P $(PORT) $(USERNAME)@$(HOST):$(FILENAME) db/$(FILENAME)
+	ssh -p $(PORT) $(USERNAME)@$(HOST) "rm $(FILENAME); exit;"
+	echo "Done"
+
+.PHONY: dump-local
+dump-local: ##@Database Dump database local
+	$(eval FILENAME=backup_$(shell date +%Y%m%d_%H%M%S).sql)
+
+	echo "Dumping database to $(FILENAME)"
+	docker exec postgres pg_dump -f $(FILENAME) -d $(POSTGRES_DB) -U $(POSTGRES_USER)
+	docker cp postgres:$(FILENAME) db/$(FILENAME)
+	docker exec postgres rm $(FILENAME)
+	echo "Done"
+
+.PHONY: restore-local
+restore-local: ##@Database Restore database local
+	exit 1;
+	$(eval FILENAME=$(args))
+	$(eval DB_NAME=$(shell cat deploy/db_name.txt))
+	$(eval DB_USERNAME=$(shell cat deploy/db_username.txt))
+
+	echo "Restoring local database from $(FILENAME)"
+	docker cp db/$(FILENAME) postgres:$(FILENAME)
+	docker exec postgres psql -d $(DB_NAME) -U $(DB_USERNAME) -f $(FILENAME)
+	docker exec postgres rm $(FILENAME)
+	echo "Done"
+
+.PHONY: restore-server
+restore-server: ##@Database Restore database on server
+	exit 1;
+	$(eval FILENAME=$(args))
+	$(eval PORT=$(shell cat deploy/port.txt))
+	$(eval HOST=$(shell cat deploy/host.txt))
+	$(eval USERNAME=$(shell cat deploy/username.txt))
+	$(eval DB_NAME=$(shell cat deploy/db_name.txt))
+	$(eval DB_USERNAME=$(shell cat deploy/db_username.txt))
+
+	echo "Restoring database from $(FILENAME)"
+	scp -P $(PORT) db/$(FILENAME) $(USERNAME)@$(HOST):$(FILENAME)
+	ssh -p $(PORT) $(USERNAME)@$(HOST) "docker cp $(FILENAME) postgres:$(FILENAME); docker exec postgres psql -d $(DB_NAME) -U $(DB_USERNAME) -f $(FILENAME); docker exec postgres rm $(FILENAME); rm $(FILENAME); exit;"
+	echo "Done"
+
+.PHONY: file-copy
+file-copy: ##@File Copy file from server
+	$(eval FILENAME=$(args))
+	$(eval PORT=$(shell cat deploy/port.txt))
+	$(eval HOST=$(shell cat deploy/host.txt))
+	$(eval USERNAME=$(shell cat deploy/username.txt))
+
+	echo "Copying file $(FILENAME) from server"
+	scp -P $(PORT) $(USERNAME)@$(HOST):$(FILENAME) $(FILENAME)
+	echo "Done"
+
+.PHONY: connect
+connect: ##@Server Connect to server
+	$(eval PORT=$(shell cat deploy/port.txt))
+	$(eval HOST=$(shell cat deploy/host.txt))
+	$(eval USERNAME=$(shell cat deploy/username.txt))
+	ssh -p $(PORT) $(USERNAME)@$(HOST)
+
+.PHONY: docker-clear-logs
+docker-clear-logs: ##@Application Clear logs
+	sudo sh -c "truncate -s 0 /var/lib/docker/containers/**/*-json.log"
+
+.PHONY: docker-logs-size
+docker-logs-size: ##@Application Get logs size
+	sudo sh -c "du -ch /var/lib/docker/containers/*/*-json.log | grep total"
+
+.PHONY: show-used-space
+show-used-space: ##@Ubuntu Show used space on disk
+	du / -aBM 2>/dev/null | sort -nr | head -n 50 | more
+
+.PHONY: show-space
+show-space: ##@Ubuntu Show space on disk
+	df -h
+
+.PHONY: clear-tmp
+clear-tmp: ##@Ubuntu Clear tmp
+	sudo find /tmp -type f -atime +10 -delete
+
+.PHONY: get-scheduler-logs
+get-scheduler-logs: ##@Application Get scheduler logs
+	$(eval FILENAME=scheduler_logs_$(shell date +%Y%m%d_%H%M%S).log)
+	$(eval PORT=$(shell cat deploy/port.txt))
+	$(eval HOST=$(shell cat deploy/host.txt))
+	$(eval USERNAME=$(shell cat deploy/username.txt))
+	$(eval DB_NAME=$(shell cat deploy/db_name.txt))
+	$(eval DB_USERNAME=$(shell cat deploy/db_username.txt))
+
+	echo "Get scheduler logs to $(FILENAME)"
+	ssh -p $(PORT) $(USERNAME)@$(HOST) "docker logs scheduler >& /tmp/$(FILENAME);exit;"
+	scp -P $(PORT) $(USERNAME)@$(HOST):/tmp/$(FILENAME) logs/$(FILENAME)
+	ssh -p $(PORT) $(USERNAME)@$(HOST) "rm /tmp/$(FILENAME); exit;"
+	echo "Done"
+
+.PHONY: run-job
+run-job: docker-build ##@Application Run scheduler job in docker
+	docker-compose run --rm --entrypoint make scheduler run-job-local $(args)
+
+.PHONY: run-job-local
+run-job-local: ##@Application Run scheduler job local
+	$(eval JOB_NAME=$(args))
+	$(VENV_BIN)/python -m tools runjob $(JOB_NAME)
+
+.PHONY: add-ssh-key-to-server
+add-ssh-key-to-server: ##@Server Add ssh key to server
+	$(eval PORT=$(shell cat deploy/port.txt))
+	$(eval HOST=$(shell cat deploy/host.txt))
+	$(eval USERNAME=$(shell cat deploy/username.txt))
+
+	echo "Add ssh key to server"
+	ssh-copy-id -i ~/.ssh/id_rsa.pub -p $(PORT) $(USERNAME)@$(HOST)
+	echo "Done"
+
+.PHOMY: generate-deploy-key
+generate-deploy-key: ##@Deploy Generate deploy key
+	$(eval PORT=$(shell cat deploy/port.txt))
+	$(eval HOST=$(shell cat deploy/host.txt))
+	$(eval USERNAME=$(shell cat deploy/username.txt))
+
+	([ ! -e deploy/id_rsa ] && echo "Generating deploy key") || (echo "Deploy key already exists, remove deploy/id_rsa to generate new one" && exit 1)
+	ssh-keygen -t rsa -b 4096 -C "$(USERNAME)@$(HOST)" -q -N "" -f deploy/id_rsa
+	ssh-copy-id -i deploy/id_rsa.pub -p $(PORT) $(USERNAME)@$(HOST)
+
+.PHONY: gen
+gen: ##@Application Generate files
+	$(VENV_BIN)/python -m tools gen $(args)
+	@make format
+
+.PHONY: sqlalchemy
+sqlalchemy: ##@Application Open sqlalchemy shell
+	$(VENV_BIN)/python -m tools sqlalchemy $(args)
+
+.PHONY: hash-password
+hash-password: ##@Application Hash password
+	$(VENV_BIN)/python -m tools hash-password $(args)
+
+.PHONY: server-copy
+server-copy: ##@Server Copy files to server
+	$(eval PORT=$(shell cat deploy/port.txt))
+	$(eval HOST=$(shell cat deploy/host.txt))
+	$(eval USERNAME=$(shell cat deploy/username.txt))
+	$(eval FILES=$(args))
+
+	echo "Copy files to server"
+	scp -P $(PORT) $(FILES) $(USERNAME)@$(HOST):/tmp
+	echo "Done"
+
+.PHONY: update-dev-branch
+update-dev-branch: ##@Git Rebase dev on main branch
+	@git checkout main
+	@git pull
+	@git checkout dev
+	@git rebase main
+
+.PHONY: delete-container-data
+delete-container-data: ##@Docker Prune containers
+	docker container prune -f
+
+.PHONY: docker-prune-cache
+docker-prune-cache: ##@Docker Prune docker cache
+	docker builder prune --filter until=24h -f
+
+.PHONY: up-celery-worker
+up-celery-worker: ##@Application Up Celery Worker
+	$(POETRY_RUN) celery -A app.worker worker --loglevel=info --logfile=logs/celery.log
+
+.PHONY: up-celery-dashboard
+up-celery-dashboard: ##@Application Up Celery Dashboard
+	$(POETRY_RUN) celery --broker=$(CELERY_BROKER_URL) flower --url_prefix=flower --port=5555 --basic_auth=$(CELERY_USER):$(CELERY_PASSWORD)
+
+.PHONY: open-pg
+open-pg: ##@Database open psql in docker database
+	$(eval DB_NAME=$(shell cat deploy/db_name.txt))
+	$(eval DB_USERNAME=$(shell cat deploy/db_username.txt))
+
+	docker exec postgres psql -d $(DB_NAME) -U $(DB_USERNAME)
 
 %::
 	echo $(MESSAGE)
