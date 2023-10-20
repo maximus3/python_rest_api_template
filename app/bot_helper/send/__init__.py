@@ -7,7 +7,6 @@ from .message import (
     send_traceback_message_safe,
 )
 from .ping_status import send_ping_status
-from .send_or_edit import send_or_edit
 
 
 __all__ = [
@@ -17,6 +16,5 @@ __all__ = [
     'send_message_safe',
     'send_traceback_message_safe',
     'send_ping_status',
-    'send_or_edit',
     'send_file',
 ]

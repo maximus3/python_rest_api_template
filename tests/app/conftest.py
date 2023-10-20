@@ -13,10 +13,7 @@ async def bot_fixture():
     _bot.send_message = AsyncMock()
     _bot.send_message.return_value = types.Message(
         message_id=46456,
-        chat=types.Chat(
-            id=1,
-            type='type'
-        ),
+        chat=types.Chat(id=1, type='type'),
         date=datetime.datetime.now(),
     )
     _bot.send_media_group = AsyncMock()
@@ -31,12 +28,6 @@ async def mock_bot(mocker, bot):
     mock = mocker.patch('app.bot_helper.bot.bot', bot)
     return mock
 
-@pytest.fixture
-async def mock_send_or_edit(mocker):
-    """Mock send_or_edit func"""
-    mock = mocker.patch('app.bot_helper.send.send_or_edit')
-    return mock
-
 
 @pytest.fixture
 def mock_message_id(mocker):
@@ -45,10 +36,7 @@ def mock_message_id(mocker):
         'app.bot_helper.send.ping_status.MESSAGE_ID',
         types.Message(
             message_id=453534,
-            chat=types.Chat(
-                id=1,
-                type='type'
-            ),
+            chat=types.Chat(id=1, type='type'),
             date=datetime.datetime.now(),
         ),
     )

@@ -1,5 +1,4 @@
 import os
-from collections import namedtuple
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Union

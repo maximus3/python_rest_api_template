@@ -2,11 +2,11 @@
 # pylint: disable=unused-argument
 # pylint: disable=too-many-lines
 
+import pathlib
 import tempfile
 import typing as tp
 from asyncio import new_event_loop, set_event_loop
 from os import environ
-import pathlib
 from types import SimpleNamespace
 from uuid import uuid4
 
@@ -154,14 +154,3 @@ def tmp_file():
         f.write('test')
     yield tmp_filename
     pathlib.Path(tmp_filename).unlink()
-
-
-@pytest.fixture
-def tmp_files():
-    tmp_filenames = [tempfile.mktemp() for _ in range(2)]
-    for filename in tmp_filenames:
-        with open(filename, 'w', encoding='utf-8') as f:
-            f.write('test')
-    yield tmp_filenames
-    for filename in tmp_filenames:
-        pathlib.Path(filename).unlink()

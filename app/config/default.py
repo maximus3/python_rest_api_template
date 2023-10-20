@@ -49,9 +49,7 @@ class DefaultSettings(BaseSettings):
     # to get a string like this run: "openssl rand -hex 32"
     SECRET_KEY: str = Field('')
     ALGORITHM: str = Field('HS256')
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(
-        1440
-    )
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(1440)
 
     PWD_CONTEXT: CryptContext = CryptContext(
         schemes=['bcrypt'], deprecated='auto'
@@ -67,12 +65,8 @@ class DefaultSettings(BaseSettings):
     TG_DB_DUMP_CHAT_ID: str = Field('')
     TG_LOG_SEND_CHAT_ID: str = Field('')
 
-    CELERY_BROKER_URL: str = Field(
-        'redis://localhost:6379'
-    )
-    CELERY_RESULT_BACKEND: str = Field(
-        'redis://localhost:6379'
-    )
+    CELERY_BROKER_URL: str = Field('redis://localhost:6379')
+    CELERY_RESULT_BACKEND: str = Field('redis://localhost:6379')
     CELERY_USER: str = Field('')
     CELERY_PASSWORD: str = Field('')
 
