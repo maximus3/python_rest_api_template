@@ -44,14 +44,3 @@ def make_alembic_config(
         config.set_main_option('sqlalchemy.url', cmd_opts.pg_url)
 
     return config
-
-
-async def create_model(session, model):
-    session.add(model)
-    await session.commit()
-    await session.refresh(model)
-
-    return model
-
-
-DSClass = namedtuple('DSClass', 'data schema')

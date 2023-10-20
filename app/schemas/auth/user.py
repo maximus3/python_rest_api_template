@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from pydantic import BaseModel
+from pydantic_settings import SettingsConfigDict
 
 
 class User(BaseModel):
@@ -8,5 +9,6 @@ class User(BaseModel):
     dt_created: datetime
     dt_updated: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = SettingsConfigDict(
+        from_attributes=True,
+    )

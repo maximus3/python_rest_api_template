@@ -3,7 +3,7 @@ from pathlib import Path
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 from pydantic import Field
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class DefaultSettings(BaseSettings):
@@ -16,19 +16,19 @@ class DefaultSettings(BaseSettings):
     standard settings for local development.
     """
 
-    ENV: str = Field('local', env='ENV')
-    PROJECT_NAME: str = Field('PROJECT_NAME', env='PROJECT_NAME')
-    PATH_PREFIX: str = Field('/api', env='PATH_PREFIX')
-    APP_HOST: str = Field('http://127.0.0.1', env='APP_HOST')
-    APP_PORT: int = Field(8090, env='APP_PORT')
-    NGINX_EXTERNAL_PORT: int = Field(80, env='NGINX_EXTERNAL_PORT')
-    DEBUG: bool = Field(True, env='DEBUG')
+    ENV: str = Field('local')
+    PROJECT_NAME: str = Field('PROJECT_NAME')
+    PATH_PREFIX: str = Field('/api')
+    APP_HOST: str = Field('http://127.0.0.1')
+    APP_PORT: int = Field(8090)
+    NGINX_EXTERNAL_PORT: int = Field(80)
+    DEBUG: bool = Field(True)
 
-    POSTGRES_DB: str = Field('data', env='POSTGRES_DB')
-    POSTGRES_HOST: str = Field('localhost', env='POSTGRES_HOST')
-    POSTGRES_USER: str = Field('pguser', env='POSTGRES_USER')
-    POSTGRES_PORT: int = Field(5432, env='POSTGRES_PORT')
-    POSTGRES_PASSWORD: str = Field('pgpswd', env='POSTGRES_PASSWORD')
+    POSTGRES_DB: str = Field('data1')
+    POSTGRES_HOST: str = Field('localhost')
+    POSTGRES_USER: str = Field('pguser')
+    POSTGRES_PORT: int = Field(5432)
+    POSTGRES_PASSWORD: str = Field('pgpswd')
 
     LOGGING_FORMAT: str = (
         '%(filename)s %(funcName)s [%(thread)d] '
@@ -44,13 +44,13 @@ class DefaultSettings(BaseSettings):
     BASE_DIR: Path = Path(__file__).resolve().parent.parent.parent
     CONFIG_FILENAME: str = 'config.yaml'
 
-    JWT_SECRET: str = Field('', env='JWT_SECRET')
+    JWT_SECRET: str = Field('')
 
     # to get a string like this run: "openssl rand -hex 32"
-    SECRET_KEY: str = Field('', env='SECRET_KEY')
-    ALGORITHM: str = Field('HS256', env='ALGORITHM')
+    SECRET_KEY: str = Field('')
+    ALGORITHM: str = Field('HS256')
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(
-        1440, env='ACCESS_TOKEN_EXPIRE_MINUTES'
+        1440
     )
 
     PWD_CONTEXT: CryptContext = CryptContext(
@@ -62,19 +62,19 @@ class DefaultSettings(BaseSettings):
         tokenUrl=AUTH_URL
     )
 
-    TG_HELPER_BOT_TOKEN: str = Field('', env='TG_HELPER_BOT_TOKEN')
-    TG_ERROR_CHAT_ID: str = Field('', env='TG_ERROR_CHAT_ID')
-    TG_DB_DUMP_CHAT_ID: str = Field('', env='TG_DB_DUMP_CHAT_ID')
-    TG_LOG_SEND_CHAT_ID: str = Field('', env='TG_LOG_SEND_CHAT_ID')
+    TG_HELPER_BOT_TOKEN: str = Field('')
+    TG_ERROR_CHAT_ID: str = Field('')
+    TG_DB_DUMP_CHAT_ID: str = Field('')
+    TG_LOG_SEND_CHAT_ID: str = Field('')
 
     CELERY_BROKER_URL: str = Field(
-        'redis://localhost:6379', env='CELERY_BROKER_URL'
+        'redis://localhost:6379'
     )
     CELERY_RESULT_BACKEND: str = Field(
-        'redis://localhost:6379', env='CELERY_RESULT_BACKEND'
+        'redis://localhost:6379'
     )
-    CELERY_USER: str = Field('', env='CELERY_USER')
-    CELERY_PASSWORD: str = Field('', env='CELERY_PASSWORD')
+    CELERY_USER: str = Field('')
+    CELERY_PASSWORD: str = Field('')
 
     @property
     def database_settings(self) -> dict[str, str | int]:
@@ -112,6 +112,7 @@ class DefaultSettings(BaseSettings):
             )
         )
 
-    class Config:
-        env_file: Path | str = '.env'
-        env_file_encoding = 'utf-8'
+    model_config = SettingsConfigDict(
+        env_file='.env',
+        env_file_encoding='utf-8',
+    )

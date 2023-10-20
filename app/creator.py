@@ -74,7 +74,7 @@ class UniqueIDMiddleware(BaseHTTPMiddleware):
         return response
 
 
-class InterceptHandler(logging.Handler):
+class InterceptHandler(logging.Handler):  # pragma: no cover
     def emit(self, record: logging.LogRecord) -> None:
         # Get corresponding Loguru level if it exists
         try:
@@ -95,7 +95,7 @@ class InterceptHandler(logging.Handler):
         )
 
 
-def configure_logger(settings: DefaultSettings) -> None:
+def configure_logger(settings: DefaultSettings) -> None:  # pragma: no cover
     loguru.logger.remove()
     loguru.logger.add(
         sink=sys.stderr, serialize=not settings.DEBUG, enqueue=True

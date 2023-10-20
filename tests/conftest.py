@@ -1,9 +1,12 @@
 # pylint: disable=redefined-outer-name
 # pylint: disable=unused-argument
+# pylint: disable=too-many-lines
 
+import tempfile
 import typing as tp
 from asyncio import new_event_loop, set_event_loop
 from os import environ
+import pathlib
 from types import SimpleNamespace
 from uuid import uuid4
 
@@ -17,7 +20,7 @@ from app.config import get_settings
 from app.creator import get_app
 from app.database.connection import SessionManager
 from app.utils import user
-from tests.factory_lib import UserFactory
+from tests import factory_lib
 from tests.utils import make_alembic_config
 
 
@@ -47,6 +50,8 @@ def postgres() -> str:  # type: ignore
     tmp_url = settings.database_uri_sync
     if not database_exists(tmp_url):
         create_database(tmp_url)
+
+    SessionManager().refresh()
 
     try:
         yield tmp_url
@@ -79,13 +84,13 @@ def migrated_postgres(alembic_config: Config):
 
 @pytest.fixture
 def create_async_session(  # type: ignore
-    postgres, migrated_postgres, manager: SessionManager = SessionManager()
+    migrated_postgres, manager: SessionManager = SessionManager()
 ) -> tp.Callable:  # type: ignore
     """
     Returns a class object with which you can
     create a new session to connect to the database.
     """
-    manager.refresh()
+    manager.refresh()  # Very important! Use this in `client` function.
     yield manager.create_async_session
 
 
@@ -105,19 +110,19 @@ async def client(  # type: ignore
     """
     Returns a client that can be used to interact with the application.
     """
-    app = get_app()
+    app = get_app(set_up_logger=False)
     yield AsyncClient(app=app, base_url='http://test')
 
 
 @pytest.fixture
 async def potential_user():  # type: ignore
-    yield UserFactory.build()
+    yield factory_lib.UserFactory.build()
 
 
 @pytest.fixture
 async def not_created_user(potential_user):  # type: ignore
     settings = get_settings()
-    yield UserFactory.build(
+    yield factory_lib.UserFactory.build(
         username=potential_user.username,
         password=settings.PWD_CONTEXT.hash(potential_user.password),
     )
@@ -140,3 +145,23 @@ def user_token(created_user):
 @pytest.fixture
 def user_headers(user_token):
     return {'Authorization': f'Bearer {user_token}'}
+
+
+@pytest.fixture
+def tmp_file():
+    tmp_filename = tempfile.mktemp()
+    with open(tmp_filename, 'w', encoding='utf-8') as f:
+        f.write('test')
+    yield tmp_filename
+    pathlib.Path(tmp_filename).unlink()
+
+
+@pytest.fixture
+def tmp_files():
+    tmp_filenames = [tempfile.mktemp() for _ in range(2)]
+    for filename in tmp_filenames:
+        with open(filename, 'w', encoding='utf-8') as f:
+            f.write('test')
+    yield tmp_filenames
+    for filename in tmp_filenames:
+        pathlib.Path(filename).unlink()
