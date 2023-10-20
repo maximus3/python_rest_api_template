@@ -10,5 +10,5 @@ class UserFactory(Factory):
     class Meta:
         model = User
 
-    username = fuzzy.FuzzyText(length=64)
-    password = fuzzy.FuzzyText(length=64)
+    username = fuzzy.FuzzyText()
+    password = fuzzy.FuzzyText()

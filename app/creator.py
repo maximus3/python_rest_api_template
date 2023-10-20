@@ -47,8 +47,8 @@ class UniqueIDMiddleware(BaseHTTPMiddleware):
                 'method': request.method,
                 'scheme': request['scheme'],
                 'http_version': request['http_version'],
-                'path': utils.get_path_with_query_string(request.scope),
-                'client': utils.get_client_addr(request.scope),
+                'path': utils.get_path_with_query_string(request.scope),  # type: ignore  # pylint: disable=line-too-long
+                'client': utils.get_client_addr(request.scope),  # type: ignore
             },
             'uuid': request['request_id'],
         }

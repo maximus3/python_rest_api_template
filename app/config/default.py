@@ -27,7 +27,7 @@ class DefaultSettings(BaseSettings):
     POSTGRES_DB: str = Field('data', env='POSTGRES_DB')
     POSTGRES_HOST: str = Field('localhost', env='POSTGRES_HOST')
     POSTGRES_USER: str = Field('pguser', env='POSTGRES_USER')
-    POSTGRES_PORT: int = Field('5432', env='POSTGRES_PORT')
+    POSTGRES_PORT: int = Field(5432, env='POSTGRES_PORT')
     POSTGRES_PASSWORD: str = Field('pgpswd', env='POSTGRES_PASSWORD')
 
     LOGGING_FORMAT: str = (

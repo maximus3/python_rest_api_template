@@ -11,7 +11,7 @@ async def send_file(
     with open(filename, 'rb') as f:
         await bot.bot.send_document(
             chat_id=chat_id,
-            document=f,
+            document=f,  # type: ignore
             caption=caption,
             disable_notification=True,
         )

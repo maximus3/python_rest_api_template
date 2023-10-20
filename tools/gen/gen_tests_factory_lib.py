@@ -39,7 +39,7 @@ def make_data(
     dir_for_create = pathlib.Path(settings.BASE_DIR) / 'tests' / 'factory_lib'
 
     db_models = sorted(
-        models.BaseModel.__subclasses__(), key=lambda m: m.__tablename__
+        models.BaseModel.__subclasses__(), key=lambda m: m.__tablename__  # type: ignore  # pylint: disable=line-too-long
     )
 
     data_for_gen = {
@@ -52,7 +52,7 @@ def make_data(
     for model in db_models:
         form_excluded_columns = ['id', 'dt_created', 'dt_updated']
         columns_with_types = {}
-        for column in model.__table__.columns:
+        for column in model.__table__.columns:  # type: ignore
             if column.name in form_excluded_columns:
                 continue
             column_type = str(column.type)
@@ -63,7 +63,7 @@ def make_data(
                 continue
             columns_with_types[column.name] = TYPE_TO_FUZZY[column_type]
 
-        data_for_gen[model.__tablename__] = gen_schemas.DataForGen(
+        data_for_gen[model.__tablename__] = gen_schemas.DataForGen(  # type: ignore  # pylint: disable=line-too-long
             template=template,
             recreate=True,
             gen_kwargs={

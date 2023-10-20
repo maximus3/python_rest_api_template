@@ -21,7 +21,7 @@ async def authenticate_user(
     user = await get_user(session, username)
     if not user:
         return None
-    if not verify_password(password, user.password):
+    if not verify_password(password, user.password):  # type: ignore
         return None
     return user
 

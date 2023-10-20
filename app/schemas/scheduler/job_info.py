@@ -11,7 +11,7 @@ class JobInfo(BaseModel):
     func: tp.Any
     trigger: str
     name: str
-    minutes: int | None
-    hours: int | None
-    hour: int | None
-    config: JobConfig | None
+    minutes: int | None = None
+    hours: int | None = None
+    hour: int | None = None
+    config: JobConfig | None = None

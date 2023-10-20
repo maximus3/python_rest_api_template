@@ -425,5 +425,9 @@ open-pg: ##@Database open psql in docker database
 
 	docker exec postgres psql -d $(DB_NAME) -U $(DB_USERNAME)
 
+.PHONY: get-pg-use-port
+get-pg-use-port: ##@Application Get apps using postgres port
+	sudo ss -lptn 'sport = :5432'
+
 %::
 	echo $(MESSAGE)

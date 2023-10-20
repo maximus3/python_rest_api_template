@@ -11,4 +11,4 @@ class PingMessage(str, Enum):
 
 class PingResponse(BaseModel):
     message: PingMessage
-    detail: str | None
+    detail: str | None = None

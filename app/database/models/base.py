@@ -32,9 +32,9 @@ class BaseModel(DeclarativeBase):
     def __repr__(self) -> str:
         columns = {
             column.name: getattr(self, column.name)
-            for column in self.__table__.columns
+            for column in self.__table__.columns  # type: ignore
         }
         return (
-            f'<{self.__tablename__}: '
+            f'<{self.__tablename__}: '  # type: ignore
             f'{", ".join(map(lambda x: f"{x[0]}={x[1]}", columns.items()))}>'
         )

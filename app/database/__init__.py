@@ -15,7 +15,7 @@ convention = {
     'pk': 'pk__%(table_name)s',
 }
 
-metadata = MetaData(naming_convention=convention)
+metadata = MetaData(naming_convention=convention)  # type: ignore
 DeclarativeBase = declarative_base(metadata=metadata)
 
 __all__ = [
